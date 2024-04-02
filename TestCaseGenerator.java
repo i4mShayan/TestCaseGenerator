@@ -5,31 +5,34 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static java.lang.Math.min;
+
+enum TimeComplexity {
+    N("n", (int) 1e8),
+    N_LOG_N("nlogn", (int) 1e5),
+    N_SQUARED("n^2", (int) 1e4),
+    EXPONENTIAL("2^n", 20),
+    LOG_N("logn", (int) 1e9),
+    SQRT_N("sqrt(n)", (int) 1e9);
+
+    final String complexityOrder;
+    final int numInputs;
+
+    TimeComplexity(String complexityOrder, int numInputs) {
+        this.complexityOrder = complexityOrder;
+        this.numInputs = numInputs;
+    }
+}
 
 public class TestCaseGenerator {
     private static final String TEST_CASE_FOLDER = "test_cases";
     private static final String INPUT_FOLDER = TEST_CASE_FOLDER + "/in";
     private static final String OUTPUT_FOLDER = TEST_CASE_FOLDER + "/out";
     private static final String ZIP_FILE = "problem.zip";
-
-    enum TimeComplexity {
-        N("n", (int) 1e8),
-        N_LOG_N("nlogn", (int) 1e5),
-        N_SQUARED("n^2", (int) 1e4),
-        EXPONENTIAL("2^n", 20),
-        LOG_N("logn", (int) 1e9),
-        SQRT_N("sqrt(n)", (int) 1e9);
-
-        final String complexityOrder;
-        final int numInputs;
-
-        TimeComplexity(String complexityOrder, int numInputs) {
-            this.complexityOrder = complexityOrder;
-            this.numInputs = numInputs;
-        }
-    }
 
     public static void main(String[] args) {
         // ----------------- INPUT SIZE -----------------
@@ -40,11 +43,11 @@ public class TestCaseGenerator {
         generateTestCases(
             numInputs, //numInputs
             1, //testCaseStart
-            10, //testCaseEnd
-            -1000, //numRangeMin
-            1000, //numRangeMax
-            0, //minNumOccurrences
-            100 //maxNumOccurrences
+            1, //testCaseEnd
+            -100000, //numRangeMin
+            100000, //numRangeMax
+            2, //minNumOccurrences
+            20 //maxNumOccurrences
         );
     }
 
@@ -67,20 +70,36 @@ public class TestCaseGenerator {
 
     private static int[] getRandomList(int len, int max, int min, int minOccurrences, int maxOccurrences) {
         int[] randomList = new int[len];
-        Map<Integer, Integer> numCountMap = new HashMap<>();
+        Map<Integer, Boolean> seenNumbers = new HashMap<>();
 
-        for (int i = 0; i < len; i++) {
-            int randomNumber = getRandomNumber(max, min);
+        int index = 0;
+        while (index < len) {
+            int potentialNumber = getRandomNumber(max, min);
+            if (!seenNumbers.containsKey(potentialNumber)) {
+                seenNumbers.put(potentialNumber, true);
 
-            while ((numCountMap.containsKey(randomNumber) && numCountMap.get(randomNumber) < minOccurrences) || (numCountMap.containsKey(randomNumber) && numCountMap.get(randomNumber) >= maxOccurrences)) {
-                randomNumber = getRandomNumber(max, min);
+                int count = getRandomNumber(maxOccurrences, minOccurrences);
+                for (int i = 0; i < min(count, len - index + 1); i++) {
+                    randomList[index++] = potentialNumber;
+                }
             }
-
-            randomList[i] = randomNumber;
-            numCountMap.put(randomNumber, numCountMap.getOrDefault(randomNumber, 0) + 1);
         }
 
+        shuffleList(randomList);
+
         return randomList;
+    }
+
+    private static void shuffleList(int[] randomList) {
+        Random rand = new Random();
+        int len = randomList.length;
+
+        for (int i = len - 1; i > 0; i--) {
+            int j = rand.nextInt(i + 1);
+            int temp = randomList[i];
+            randomList[i] = randomList[j];
+            randomList[j] = temp;
+        }
     }
 
     private static void generateInputFile(String fileName, int n, int[] arr) {
