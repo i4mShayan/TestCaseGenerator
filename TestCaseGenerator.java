@@ -9,8 +9,6 @@ import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static java.lang.Math.min;
-
 enum TimeComplexity {
     N("n", (int) 1e8),
     N_LOG_N("nlogn", (int) 1e5),
@@ -79,14 +77,13 @@ public class TestCaseGenerator {
                 seenNumbers.put(potentialNumber, true);
 
                 int count = getRandomNumber(maxOccurrences, minOccurrences);
-                for (int i = 0; i < min(count, len - index + 1); i++) {
+                for (int i = 0; i < Math.min(count, len - index + 1); i++) {
                     randomList[index++] = potentialNumber;
                 }
             }
         }
 
         shuffleList(randomList);
-
         return randomList;
     }
 
